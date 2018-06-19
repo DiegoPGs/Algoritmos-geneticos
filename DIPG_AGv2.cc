@@ -7,13 +7,15 @@
 #include "iostream"
 #include "cstdlib"
 
+//DEFINITION
+
 //AUX
 void mostrar(std::vector<std::vector<int>>& poblacion);
 int bit_Aleatorio();
 int get_Aptitude(std::vector<int>& individue);
 //INITIALIZATION
 std::vector<std::vector<int>> crear_Poblacion(int tamPoblacion, int tamano);
-std::vector<std::vector<int>> agregar_Individuo(std::vector<std::vector<int>> poblacion, std::vector<int> individuo);
+std::vector<std::vector<int>> agregar_Individuo(std::vector<std::vector<int>>& poblacion, std::vector<int>& individuo);
 //CROSSING
 std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag);
 std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag);
@@ -25,8 +27,7 @@ std::vector<int> mutate_Displacement(std::vector<int>& individue);
 std::vector<int> mutate_Reciprocal_Exchange(std::vector<int>& individue);
 std::vector<int> mutate_Heuristical(std::vector<int>& individue);
 
-
-
+//IMPLEMENTETATION
 
 //AUX
 void mostrar(std::vector<std::vector<int>>& poblacion) {
@@ -242,32 +243,35 @@ std::vector<int> mutate_Reciprocal_Exchange(std::vector<int>& individue) {
 
 	return aux;
 }
+
 std::vector<int> mutate_Heuristical(std::vector<int>& individue) {
-	std::vector<int> aux(individue.size());
-	std::vector<int> sub_Aux(3);
-	int piv = std::rand() % individue.size();
+	std::cout << individue.size() << std::endl;
+	std::vector<int> aux(individue.size()), substring;
+	int piv1 = (std::rand() % individue.size())/2;
+	int piv2 = piv1 + (std::rand() % 4);
 
 	do {
-		piv = std::rand() % individue.size();
-	} while ((piv == 0) || (piv == individue.size()));
+		piv2 = piv1 + (std::rand() % 4);
+	} while (piv2 == piv1);
 
-	sub_Aux[0] = individue[piv - 1];
-	sub_Aux[1] = individue[piv];
-	sub_Aux[2] = individue[piv + 1];
-	/*
+	std::cout << "piv1: " << piv1 << std::endl;
+	std::cout << "piv2: " << piv2 << std::endl;
+
 	for (int i = 0; i != individue.size(); ++i) {
+		bool marca = false;
+		if (i >= piv1 && i <= piv2)
+			marca = true;
+		else
+			marca = false;
 		aux[i] = individue[i];
-		switch (i) {
-		case piv - 1:
-			break;
-		case piv:
-			break;
-		case piv + 1:
-			break;
-		default:
-			break;
+		if (marca) {
+			substring.insert(substring.end(), i);
 		}
 	}
-	*/
+
+	for (auto i = substring.begin(); i != substring.end(); ++i) {
+		std::cout << *i << ' ';
+	}
+	
 	return aux;
 }
