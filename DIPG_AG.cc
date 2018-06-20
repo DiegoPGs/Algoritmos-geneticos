@@ -165,10 +165,7 @@ std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& pa
 	} while (piv1 == piv2);
 
 	for (int i = 0; i != size; ++i) {
-		bool marca = false;
-		if (i == piv1 || i == piv2)
-			marca = not marca;
-		if (marca) {
+		if (i >= piv1 && i <= piv2) {
 			if (flag)
 				substring.insert(substring.end(), parent1[i]);
 			else
@@ -184,12 +181,9 @@ std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& pa
 	std::cout << std::endl;
 	//string generation with the substring parent A
 	for (int i = 0; i != size; ++i) {
-		bool marca = false;
-		//if (std::find(std::begin(substring), std::end(substring), parent1[i]) != std::);
-
-		auto result1 = std::find(std::begin(substring), std::end(substring), parent1[i]);
-		if (result1 != substring.end())
-			int i;
+		if (std::find(substring.begin(), substring.end(), i) != substring.end()) {
+			aux[i] = individue[substring.back()];
+		}
 	}
 
 	return aux;
