@@ -18,10 +18,10 @@ int get_Aptitude(std::vector<int>& individue);
 std::vector<std::vector<int>> crear_Poblacion(int tamPoblacion, int tamano);
 std::vector<std::vector<int>> agregar_Individuo(std::vector<std::vector<int>>& poblacion, std::vector<int>& individuo);
 //CROSSING
-std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag);
-std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag);
-std::vector<int> chromosome_Crossing_Cross_Accented(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag);
-std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag);
+std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex);
+std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex);
+std::vector<int> chromosome_Crossing_Cross_Accented(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex);
+std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex);
 //MUTATION
 std::vector<int> mutate_Insertion(std::vector<int>& individue);
 std::vector<int> mutate_Displacement(std::vector<int>& individue);
@@ -71,7 +71,7 @@ std::vector<std::vector<int>> agregar_Individuo(std::vector<std::vector<int>>& p
 	return pob;
 }
 //CROSSING
-std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag) {
+std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex) {
 	std::vector<int> aux(size);
 	int piv1 = std::rand() % size;
 	int piv2 = std::rand() % size;
@@ -86,13 +86,13 @@ std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::v
 		if (i == piv1 || i == piv2)
 point = !point;
 if (point) {
-	if (flag)
+	if (sex)
 		aux[i] = parent1[i];
 	else
 		aux[i] = parent2[i];
 }
 else {
-	if (flag)
+	if (sex)
 		aux[i] = parent2[i];
 	else
 		aux[i] = parent1[i];
@@ -100,7 +100,7 @@ else {
 	}
 	return aux;
 }
-std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag) {
+std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex) {
 	std::vector<int> aux(size / 2), aux2(size / 2);
 
 	for (int i = 0; i < (size / 2); i++) {
@@ -113,7 +113,7 @@ std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, st
 			aux2[i] = parent1[i];
 		}
 	}
-	if (flag) {
+	if (sex) {
 		aux.insert(aux.end(), aux2.begin(), aux2.end());
 		return aux;
 	}
@@ -122,7 +122,7 @@ std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, st
 		return aux2;
 	}
 }
-std::vector<int> chromosome_Crossing_Cross_Accented(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag) {
+std::vector<int> chromosome_Crossing_Cross_Accented(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex) {
 	std::vector<int> aux(size), offspring(size);
 	int stc_iterator = 0;
 
@@ -132,13 +132,13 @@ std::vector<int> chromosome_Crossing_Cross_Accented(std::vector<int>& parent1, s
 		aux[i] = stc_iterator;
 		{
 			if (aux[i] == stc_iterator - 1) {
-				if (flag)
+				if (sex)
 					offspring[i] = parent2[i];
 				else
 					offspring[i] = parent1[i];
 			}
 			else {
-				if (flag)
+				if (sex)
 					offspring[i] = parent1[i];
 				else
 					offspring[i] = parent2[i];
@@ -154,7 +154,7 @@ position based
 order based crossover
 cx
 */
-std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool flag) {
+std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex) {
 	//parent A substring selection
 	std::vector<int> aux(size), substring;
 	int piv1 = std::rand() % size;
@@ -166,28 +166,40 @@ std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& pa
 
 	for (int i = 0; i != size; ++i) {
 		if (i >= piv1 && i <= piv2) {
-			if (flag)
-				substring.insert(substring.end(), parent1[i]);
+			if (sex)
+				substring.insert(substring.end(), i);
 			else
-				substring.insert(substring.end(), parent2[i]);
+				substring.insert(substring.end(), i);
+		}
+		if (std::find(substring.begin(), substring.end(), i) != substring.end()) {
+			if (sex) {
+				aux[i] = parent1[substring.back()];
+				substring.pop_back();
+			}
+			else {
+				aux[i] = parent2[substring.back()];
+				substring.pop_back();
+			}
 		}
 		else {
-			if (flag)
-				substring.insert(substring.end(), parent2[i]);
+			if (sex) {
+				aux[i] = parent2[i];
+			}
 			else
-				substring.insert(substring.end(), parent1[i]);
+				aux[i] = parent1[i];
 		}
+		return aux;
 	}
 	std::cout << std::endl;
 	//string generation with the substring parent A
 	for (int i = 0; i != size; ++i) {
-		if (std::find(substring.begin(), substring.end(), i) != substring.end()) {
-			aux[i] = individue[substring.back()];
-		}
+		
 	}
 
 	return aux;
 }
+
+
 
 //MUTATION
 std::vector<int> mutate_Insertion(std::vector<int>& individue) {
