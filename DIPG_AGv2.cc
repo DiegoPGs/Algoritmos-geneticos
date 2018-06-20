@@ -3,6 +3,7 @@
 #include "algorithm"
 #include "cmath"
 #include "ctime"
+#include "random"
 
 #include "iostream"
 #include "cstdlib"
@@ -243,10 +244,10 @@ std::vector<int> mutate_Reciprocal_Exchange(std::vector<int>& individue) {
 
 	return aux;
 }
-
 std::vector<int> mutate_Heuristical(std::vector<int>& individue) {
-	std::cout << individue.size() << std::endl;
 	std::vector<int> aux(individue.size()), substring;
+	std::random_device rd;
+	std::mt19937 g(rd());
 	int piv1 = (std::rand() % individue.size())/2;
 	int piv2 = piv1 + (std::rand() % 4);
 
@@ -254,23 +255,24 @@ std::vector<int> mutate_Heuristical(std::vector<int>& individue) {
 		piv2 = piv1 + (std::rand() % 4);
 	} while (piv2 == piv1);
 
-	std::cout << "piv1: " << piv1 << std::endl;
-	std::cout << "piv2: " << piv2 << std::endl;
-
 	for (int i = 0; i != individue.size(); ++i) {
 		bool marca = false;
 		if (i >= piv1 && i <= piv2)
 			marca = true;
 		else
 			marca = false;
-		aux[i] = individue[i];
 		if (marca) {
 			substring.insert(substring.end(), i);
 		}
 	}
-
-	for (auto i = substring.begin(); i != substring.end(); ++i) {
-		std::cout << *i << ' ';
+	std::shuffle(substring.begin(), substring.end(), g);
+	for (int i = 0; i != individue.size(); ++i) {
+		if (std::find(substring.begin(), substring.end(), i) != substring.end()) {
+			aux[i] = individue[substring.back()];
+			substring.pop_back();
+		}
+		else
+			aux[i] = individue[i];
 	}
 	
 	return aux;
