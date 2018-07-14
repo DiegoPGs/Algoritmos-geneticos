@@ -1,5 +1,6 @@
 #pragma once
 #include "vector"
+#include <stack>
 #include "algorithm"
 #include "cmath"
 #include "ctime"
@@ -12,11 +13,12 @@
 
 //AUX
 void mostrar(std::vector<std::vector<int>>& poblacion);
-int bit_Aleatorio();
+inline int bit_Aleatorio();
 int get_Aptitude(std::vector<int>& individue);
 //INITIALIZATION
 std::vector<std::vector<int>> crear_Poblacion(int tamPoblacion, int tamano);
-std::vector<std::vector<int>> agregar_Individuo(std::vector<std::vector<int>>& poblacion, std::vector<int>& individuo);
+// Changed this function
+void agregar_Individuo(std::vector<std::vector<int>>& poblacion, std::vector<int>& individuo);
 //CROSSING
 std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex);
 std::vector<int> chromosome_Crossing_Cross_Uniform(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex);
@@ -42,61 +44,66 @@ void mostrar(std::vector<std::vector<int>>& poblacion) {
 		std::cout << std::endl;
 	}
 }
-int bit_Aleatorio() {
+
+// Made the function `inline` to let the compiler optimize easier its uses
+inline int bit_Aleatorio() {
 	return std::rand() % 2;
 }
+
 int get_Aptitude(std::vector<int>& individue) {
 	int sum = 0;
-	int o = 0;
-	for (int i = individue.size() - 1; i >= 0; --i) {
-		sum += individue[i] * pow(2, o);
-		++o;
-	}
+	// changed `o`name to `power` to reflect better its purpose
+	int power = individue.size() - 1;
+	// Changed to reflect bitwise operators and make it more efficiente
+	// as well as make it easier to read
+	for( auto bit : individue )
+		sum += bit * (1 << power--); // Clean and simple, yet the same
 	return sum;
 }
 //INITIALIZATION
 std::vector<std::vector<int>> crear_Poblacion(int tamPoblacion, int tamano) {
-	std::vector<std::vector<int>> aux;
-	for (int i = 0; i != tamPoblacion; ++i) {
-		std::vector<int> individue(tamano);
-		std::generate(individue.begin(), individue.end(), bit_Aleatorio);
-		aux.insert(aux.end(), individue);
-	}
+	// Optimized generation through the use of the vector constructor
+	std::vector<std::vector<int>> aux(tamPoblacion, std::vector<int>(tamano));
+	// Now let's simplify the `for` to reflect better the changes
+	for( auto& individual : aux )
+		std::generate( individual.begin(), individual.end(), bit_Aleatorio() );
 	return aux;
 }
-std::vector<std::vector<int>> agregar_Individuo(std::vector<std::vector<int>>& poblacion, std::vector<int>& individuo) {
-	std::vector<std::vector<int>> pob = poblacion;
-	std::vector<int> aux;
 
-	return pob;
+// Tried to fill the hole in the code here
+void agregar_Individuo(std::vector<std::vector<int>>& poblacion, std::vector<int>& individuo) {
+	// Commenting out in case it's needed back
+	// std::vector<std::vector<int>> pob = poblacion;
+	// std::vector<int> aux;
+	poblacion.emplace_back( individuo ); // Try to place it at the back with `std::move` semantics as well
 }
+
 //CROSSING
 std::vector<int> chromosome_Crossing_Two_Point(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex) {
 	std::vector<int> aux(size);
 	int piv1 = std::rand() % size;
 	int piv2 = std::rand() % size;
 
-	do {
-		piv2 = std::rand() % size;
-	} while (piv1 == piv2);
+	// Changed logic a little to avoid an extra computation
+	while (piv1 == piv2) piv2 = std::rand() % size;
 
 	bool point = true;
 
 	for (int i = 0; i != size; ++i) {
 		if (i == piv1 || i == piv2)
-point = !point;
-if (point) {
-	if (sex)
-		aux[i] = parent1[i];
-	else
-		aux[i] = parent2[i];
-}
-else {
-	if (sex)
-		aux[i] = parent2[i];
-	else
-		aux[i] = parent1[i];
-}
+			point = !point;
+		if (point) {
+			if (sex)
+				aux[i] = parent1[i];
+			else
+				aux[i] = parent2[i];
+		}
+		else {
+			if (sex)
+				aux[i] = parent2[i];
+			else
+				aux[i] = parent1[i];
+		}
 	}
 	return aux;
 }
@@ -156,7 +163,8 @@ cx
 */
 std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& parent2, int size, bool sex) {
 	//parent A substring selection
-	std::vector<int> aux(size), substring;
+	std::vector<int> aux(size);
+	std::stack<int> substring;
 	int piv1 = std::rand() % size;
 	int piv2 = std::rand() % size;
 
@@ -165,21 +173,14 @@ std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& pa
 	} while (piv1 == piv2);
 
 	for (int i = 0; i != size; ++i) {
-		if (i >= piv1 && i <= piv2) {
-			if (sex)
-				substring.insert(substring.end(), i);
-			else
-				substring.insert(substring.end(), i);
-		}
-		if (std::find(substring.begin(), substring.end(), i) != substring.end()) {
-			if (sex) {
-				aux[i] = parent1[substring.back()];
-				substring.pop_back();
-			}
-			else {
-				aux[i] = parent2[substring.back()];
-				substring.pop_back();
-			}
+		// Cleared an unneeded `if` since both ways lead to the same path
+		// Since the condition to insert `i` to `substring` is `i >= piv1 and i <= piv2` we can simplify here
+		// and save the computation of `std::find` in the vector
+		if ( i >= piv1 and i <= piv2 ) {
+			// as we just need to check if the ith element is in the range and exists
+			// but it exists when is in the range, thus we can ease the computations
+			if (sex) aux[i] = parent1[i];
+			else aux[i] = parent2[i];
 		}
 		else {
 			if (sex) {
@@ -191,6 +192,7 @@ std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& pa
 		return aux;
 	}
 	std::cout << std::endl;
+	// I need to read more to modify this part.
 	//string generation with the substring parent A
 	for (int i = 0; i != size; ++i) {
 		
@@ -203,48 +205,41 @@ std::vector<int> order_Crossover(std::vector<int>& parent1, std::vector<int>& pa
 
 //MUTATION
 std::vector<int> mutate_Insertion(std::vector<int>& individue) {
-	std::vector<int> aux(individue.size());
+	// Simplified the copy of `individue` with the copy constructor
+	std::vector<int> aux(individue);
 	int piv1 = std::rand() % individue.size();
 	int piv2 = std::rand() % individue.size();
-
-	do {
-		piv2 = std::rand() % individue.size();
-	} while (piv1 == piv2);
-	for (int i = 0; i != individue.size(); ++i) {
-		aux[i] = individue[i];
-	}
+	// Changed the logic to reduce by one computation the `while` loop
+	while (piv1 == piv2) piv2 = std::rand() % individue.size();
+	// Thus, removed the `for` that copied `individue` to `aux`
 	aux[piv1] = individue[piv2];
-
 	return aux;
 }
 std::vector<int> mutate_Displacement(std::vector<int>& individue) {
-	std::vector<int> aux(individue.size());
-	int piv = std::rand() % individue.size();
-
-	do {
-		piv = std::rand() % individue.size() - 1;
-	} while ((piv == 0));
+	// Simplified the copy of `individue` with the copy constructor
+	std::vector<int> aux(individue);
+	int piv = std::rand() % individue.size() - 1;
+	// Changed the logic to reduce one computation in the `while` loop
+	while (piv == 0) piv = std::rand() % individue.size() - 1;
 	for (int i = 0; i != piv; ++i) {
 		aux[i] = individue[i];
 	}
-	for (int i = piv; i != individue.size() - 1; ++i) {
-		aux[i] = individue[i + 1];
-	}
-	aux[individue.size()] = bit_Aleatorio();
-
+	// Replaced the for that copies elements from `individue` to `aux`.
+	std::copy( individue.begin() + piv + 1, individue.end(), aux.begin() + piv );
+	// for (int i = piv; i != individue.size() - 1; ++i) {
+	// 	aux[i] = individue[i + 1];
+	// }
+	// Fixed an `off-by-one' vector access
+	aux[individue.size() - 1] = bit_Aleatorio();
 	return aux;
 }
 std::vector<int> mutate_Reciprocal_Exchange(std::vector<int>& individue) {
-	std::vector<int> aux(individue.size());
+	// Simplified the copy of `individue` with the copy constructor
+	std::vector<int> aux(individue);
 	int piv1 = std::rand() % individue.size();
 	int piv2 = std::rand() % individue.size();
-
-	do {
-		piv2 = std::rand() % individue.size();
-	} while (piv1 == piv2);
-	for (int i = 0; i != individue.size(); ++i) {
-		aux[i] = individue[i];
-	}
+	// Changed the logic to reduce one computation in the `while` loop
+	while (piv1 == piv2) piv2 = std::rand() % individue.size();
 	aux[piv1] = individue[piv2];
 	aux[piv2] = individue[piv1];
 
@@ -256,21 +251,15 @@ std::vector<int> mutate_Heuristical(std::vector<int>& individue) {
 	std::mt19937 g(rd());
 	int piv1 = (std::rand() % individue.size())/2;
 	int piv2 = piv1 + (std::rand() % 4);
+	// Changed the logic to reduce one computation in the `while` loop
+	// though I think maybe this can be avoided if we add an offset to
+	// the initialization of `piv2` (make it modulo 3 and add always 1)
+	while (piv2 == piv1) piv2 = piv1 + (std::rand() % 4);
 
-	do {
-		piv2 = piv1 + (std::rand() % 4);
-	} while (piv2 == piv1);
+	for (int i = 0; i != individue.size(); ++i)
+		// Removed an innecesary decision tree and made code clearer
+		if (i >= piv1 && i <= piv2) substring.emplace_back(i);
 
-	for (int i = 0; i != individue.size(); ++i) {
-		bool marca = false;
-		if (i >= piv1 && i <= piv2)
-			marca = true;
-		else
-			marca = false;
-		if (marca) {
-			substring.insert(substring.end(), i);
-		}
-	}
 	std::shuffle(substring.begin(), substring.end(), g);
 	for (int i = 0; i != individue.size(); ++i) {
 		if (std::find(substring.begin(), substring.end(), i) != substring.end()) {
